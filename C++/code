@@ -1,0 +1,96 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <cmath>
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstdio>
+using namespace std;
+
+
+int calculateHash(const string& str, int start, int end) {
+    int hashValue = 0;
+    int prime = 101; 
+
+    for (int i = start; i <= end; ++i) {
+        hashValue = (hashValue * 256 + str[i]) % prime;
+    }
+    return hashValue;
+}
+
+void searchRabinKarp(const string& text, const string& pattern) {
+    int textLength = text.length();
+    int patternLength = pattern.length();
+    int prime = 101; 
+    int ck=0;
+
+    int patternHash = calculateHash(pattern, 0, patternLength - 1);
+    int textHash = calculateHash(text, 0, patternLength - 1);
+
+    for (int i = 0; i <= textLength - patternLength; ++i) 
+	{
+        
+        if (patternHash == textHash) {
+            bool match = true;
+            
+            for (int j = 0; j < patternLength; ++j) {
+                if (text[i + j] != pattern[j]) {
+                    match = false;
+                    int ck=1;
+                    break;
+                }
+            }
+            if (match) {
+                cout << "Pattern found at index " << i << endl;
+            }
+        }
+     
+        if (i < textLength - patternLength) {
+            
+            textHash = (textHash - text[i] * (int)pow(256, patternLength - 1)) % prime;
+            if (textHash < 0) {
+                textHash += prime;
+            }
+            
+            textHash = (textHash * 256 + text[i + patternLength]) % prime;
+            if (textHash < 0) {
+                textHash += prime;
+            }
+        }
+    }
+    if(ck == 0)
+    {
+    	cout<<"Not found";
+	}
+}
+
+int main() {
+	string filename;
+    cout << "Enter the name of the CSV file: ";
+    cin >> filename;
+    ifstream inputFile(filename.c_str()); 
+    if (!inputFile.is_open()) {
+        cerr << "Error: Unable to open input CSV file." << endl;
+        return 1;
+    }
+
+    string line;
+    while (getline(inputFile, line)) {
+        stringstream ss(line);
+        string text, pattern;
+
+        if (getline(ss, text, ',') && getline(ss, pattern, ',')) {
+            cout << "Text: " << text << endl;
+            cout << "Pattern: " << pattern << endl;
+            cout << "Indices where pattern is found:" << endl;
+            searchRabinKarp(text, pattern);
+        } else {
+            cerr << "Error: Invalid format in input CSV file." << endl;
+        }
+    }
+
+    inputFile.close();
+    return 0;
+}
